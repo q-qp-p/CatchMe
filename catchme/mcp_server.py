@@ -164,12 +164,14 @@ def serve() -> None:
         days = []
         for t in trees:
             node = t.get("tree", {})
-            days.append({
-                "date": t.get("date", node.get("title", "?")),
-                "node_id": node.get("node_id", ""),
-                "summary": (node.get("summary") or "")[:300],
-                "session_count": len(node.get("children", [])),
-            })
+            days.append(
+                {
+                    "date": t.get("date", node.get("title", "?")),
+                    "node_id": node.get("node_id", ""),
+                    "summary": (node.get("summary") or "")[:300],
+                    "session_count": len(node.get("children", [])),
+                }
+            )
         return [TextContent(type="text", text=json.dumps(days, ensure_ascii=False, indent=2))]
 
     # ── get_session ──────────────────────────────────────────────────────────
@@ -198,7 +200,9 @@ def serve() -> None:
                 out["children"] = [_slim(c, depth + 1) for c in n.get("children", [])]
             return out
 
-        return [TextContent(type="text", text=json.dumps(_slim(node), ensure_ascii=False, indent=2))]
+        return [
+            TextContent(type="text", text=json.dumps(_slim(node), ensure_ascii=False, indent=2))
+        ]
 
     # ── get_tree ─────────────────────────────────────────────────────────────
 
