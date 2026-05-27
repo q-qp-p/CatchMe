@@ -23,6 +23,7 @@ get_tree(date)                    — Full activity tree JSON for a given date.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 
@@ -47,7 +48,7 @@ def serve() -> None:
     from mcp.server.stdio import stdio_server
     from mcp.types import TextContent, Tool
 
-    from .pipelines.retrieve import retrieve, _load_all_trees, _node_index
+    from .pipelines.retrieve import _load_all_trees, _node_index, retrieve
 
     server = Server("catchme")
 
@@ -163,12 +164,14 @@ def serve() -> None:
         days = []
         for t in trees:
             node = t.get("tree", {})
-            days.append({
-                "date": t.get("date", node.get("title", "?")),
-                "node_id": node.get("node_id", ""),
-                "summary": (node.get("summary") or "")[:300],
-                "session_count": len(node.get("children", [])),
-            })
+            days.append(
+                {
+                    "date": t.get("date", node.get("title", "?")),
+                    "node_id": node.get("node_id", ""),
+                    "summary": (node.get("summary") or "")[:300],
+                    "session_count": len(node.get("children", [])),
+                }
+            )
         return [TextContent(type="text", text=json.dumps(days, ensure_ascii=False, indent=2))]
 
     # ── get_session ──────────────────────────────────────────────────────────
@@ -197,7 +200,9 @@ def serve() -> None:
                 out["children"] = [_slim(c, depth + 1) for c in n.get("children", [])]
             return out
 
-        return [TextContent(type="text", text=json.dumps(_slim(node), ensure_ascii=False, indent=2))]
+        return [
+            TextContent(type="text", text=json.dumps(_slim(node), ensure_ascii=False, indent=2))
+        ]
 
     # ── get_tree ─────────────────────────────────────────────────────────────
 
@@ -213,8 +218,6 @@ def serve() -> None:
         return [TextContent(type="text", text=json.dumps(tree_data, ensure_ascii=False, indent=2))]
 
     # ── run ──────────────────────────────────────────────────────────────────
-
-    import asyncio
 
     async def _run():
         async with stdio_server() as (read_stream, write_stream):
